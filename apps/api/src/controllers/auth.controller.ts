@@ -12,15 +12,17 @@ import {
 const isProd = env.NODE_ENV === 'production';
 
 function setAuthCookies(res: Response, accessToken: string, refreshToken: string): void {
+  // Cross-origin web/API on Railway needs SameSite=None + Secure
+  const sameSite = isProd ? 'none' : 'lax';
   res.cookie('access_token', accessToken, {
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite,
     secure: isProd,
     maxAge: 15 * 60 * 1000,
   });
   res.cookie('refresh_token', refreshToken, {
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite,
     secure: isProd,
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/api/auth',

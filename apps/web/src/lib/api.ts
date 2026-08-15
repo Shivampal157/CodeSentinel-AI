@@ -26,12 +26,23 @@ export function formatApiError(error: unknown): string {
 
 type ApiOptions = Omit<RequestInit, 'body'> & { body?: unknown };
 
+const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '';
+
+function apiUrl(path: string): string {
+  const normalized = path.startsWith('/api') ? path : `/api${path}`;
+  return `${API_BASE}${normalized}`;
+}
+
+export function getApiBaseUrl(): string {
+  return API_BASE;
+}
+
 export async function api<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const headers = new Headers(options.headers);
   headers.set('Accept', 'application/json');
   if (options.body !== undefined) headers.set('Content-Type', 'application/json');
 
-  const response = await fetch(path.startsWith('/api') ? path : `/api${path}`, {
+  const response = await fetch(apiUrl(path), {
     ...options,
     credentials: 'include',
     headers,

@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc --pretty false",
-    "start": "node dist/index.js",
+    "build": "tsc --pretty false --noEmit",
+    "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -21,6 +21,7 @@
     "ioredis": "^5.4.2",
     "mongoose": "^8.24.3",
     "openai": "^7.4.0",
+    "tsx": "^4.19.2",
     "uuid": "^14.0.1",
     "web-tree-sitter": "^0.26.12",
     "winston": "^3.17.0",
@@ -30,7 +31,6 @@
     "@types/babel__traverse": "^7.28.0",
     "@types/node": "^22.10.7",
     "@types/uuid": "^10.0.0",
-    "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   }
 }

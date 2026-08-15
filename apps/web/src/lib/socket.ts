@@ -1,13 +1,16 @@
 import { io, type Socket } from 'socket.io-client';
 
+const SOCKET_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') || undefined;
+
 let socket: Socket | null = null;
 
 export function getSocket(token?: string | null): Socket {
   if (!socket) {
-    socket = io('http://localhost:4000', {
+    socket = io(SOCKET_URL ?? '/', {
       autoConnect: false,
       withCredentials: true,
       auth: { token },
+      path: '/socket.io',
     });
   } else {
     socket.auth = { token };

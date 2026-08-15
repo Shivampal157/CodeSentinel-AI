@@ -1,4 +1,5 @@
 import { ArrowRight, Braces, GitPullRequest, GitFork, ShieldCheck } from 'lucide-react';
+import { getApiBaseUrl } from '../lib/api';
 
 export function LandingPage() {
   return (
@@ -28,7 +29,7 @@ export function LandingPage() {
           </p>
           <button
             onClick={() => {
-              window.location.href = '/api/auth/github';
+              window.location.href = `${getApiBaseUrl()}/api/auth/github`;
             }}
             className="mt-10 inline-flex h-11 items-center gap-3 bg-signal-green px-5 text-sm font-semibold text-ink-950 transition hover:bg-emerald-300"
           >
