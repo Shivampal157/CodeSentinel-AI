@@ -1,129 +1,172 @@
 # CodeSentinel AI
 
-Real-time collaborative code review with **RAG over your actual repo** (Qdrant + real embeddings + Claude). MongoDB, Redis, and Qdrant run in Docker — no in-memory fakes.
+GitHub-connected code review that actually reads your codebase.
+
+Most AI review tools only see the diff. CodeSentinel indexes the repo into a vector store, retrieves related symbols at review time, and grounds Claude findings in that context — so comments can say “this pattern also appears in `auth.service.ts`,” not just “looks wrong.”
+
+**Repo:** [github.com/Shivampal157/CodeSentinel-AI](https://github.com/Shivampal157/CodeSentinel-AI)
+
+---
+
+## What it does
+
+1. Sign in with GitHub OAuth  
+2. Import a repository and index it (AST chunks → embeddings → Qdrant)  
+3. Pull in a PR by number and open the Monaco diff view  
+4. Run an AI review — BullMQ job, RAG retrieval, Claude, Redis cache  
+5. Get findings, debt score, and live status over Socket.io  
+6. Search the indexed codebase in natural language  
+
+No mock databases. MongoDB, Redis, and Qdrant are real services (Docker locally, or Atlas / Upstash / Qdrant Cloud for deploy).
+
+---
+
+## Architecture
+
+```
+┌─────────────┐     REST + WS      ┌──────────────┐
+│  React app  │ ◄────────────────► │  Express API │
+│  + Monaco   │                    │  + Socket.io │
+└─────────────┘                    └──────┬───────┘
+                                          │
+              ┌───────────────────────────┼───────────────────────────┐
+              ▼                           ▼                           ▼
+         ┌─────────┐                ┌─────────┐                 ┌─────────┐
+         │ MongoDB │                │  Redis  │                 │ Qdrant  │
+         │ users,  │                │ cache,  │                 │ vectors │
+         │ PRs,    │                │ BullMQ, │                 │  RAG    │
+         │ reviews │                │ pub/sub │                 └────▲────┘
+         └─────────┘                └────┬────┘                      │
+                                         │                    embeddings
+                                         ▼                      (Gemini /
+                                   ┌───────────┐               OpenAI / Voyage)
+                                   │  Worker   │
+                                   │ embed +   │──────► Claude review
+                                   │ ai-review │
+                                   └───────────┘
+```
+
+Deeper tradeoffs (why Qdrant over Mongo vectors, Socket.io Redis adapter, chunking): [SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md)
+
+---
 
 ## Stack
 
-| Layer | Tech |
-|---|---|
-| Web | React 18, TypeScript, Tailwind, Zustand, Monaco, Socket.io client |
-| API | Node, Express, Zod, Winston, Socket.io + Redis adapter |
-| Worker | BullMQ (embedding + AI review jobs) |
-| Data | MongoDB, Redis, Qdrant |
-| AI | Gemini / OpenAI / Voyage embeddings, Anthropic Claude |
+| Area | Choices |
+|------|---------|
+| Frontend | React 18, TypeScript, Vite, Tailwind, Zustand, Monaco |
+| API | Express, Zod, Winston, Helmet, rate limiting |
+| Jobs | BullMQ workers (`embedding`, `ai-review`) |
+| Realtime | Socket.io + Redis adapter |
+| Data | MongoDB · Redis · Qdrant |
+| AI | Gemini / OpenAI / Voyage embeddings · Anthropic Claude |
+| Ops | Docker Compose, Prometheus `/api/metrics`, GitHub Actions CI |
 
-## Prerequisites
+Monorepo: `apps/web` · `apps/api` · `apps/worker` · `packages/shared`
 
-- Node 20+
-- Docker Desktop
-- API keys (see below)
+---
 
-## 1. Clone & env
+## Quick start
+
+**Needs:** Node 20+, Docker Desktop, and the API keys below.
 
 ```bash
+git clone https://github.com/Shivampal157/CodeSentinel-AI.git
+cd CodeSentinel-AI
 cp .env.example .env
+npm install
 ```
 
-Generate JWT secrets (already done if you used the scaffolded `.env`):
-
-```bash
-node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
-```
-
-### Keys you must provide
+Fill `.env` (minimum):
 
 | Variable | Where |
-|---|---|
-| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | [GitHub → Developer settings → OAuth Apps](https://github.com/settings/developers). Callback: `http://localhost:4000/api/auth/github/callback`. Scopes used: `read:user user:email repo` |
-| `OPENAI_API_KEY` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) (optional if using Gemini) |
-| `GEMINI_API_KEY` | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) (free tier friendly) |
-| `ANTHROPIC_API_KEY` | [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) |
-
-Set `EMBEDDING_PROVIDER=gemini|openai|voyage`. Optional: `INDEX_MAX_CHUNKS=80` for free-tier rate limits.
-
-## 2. Infra
+|----------|--------|
+| `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` | `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"` |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | [OAuth Apps](https://github.com/settings/developers) — callback `http://localhost:4000/api/auth/github/callback` |
+| `GEMINI_API_KEY` *(or OpenAI / Voyage)* | [Google AI Studio](https://aistudio.google.com/apikey) |
+| `ANTHROPIC_API_KEY` | [Anthropic Console](https://console.anthropic.com/settings/keys) |
 
 ```bash
-npm install
-npm run infra:up
-npm run infra:verify
-```
-
-### Prove containers are real
-
-```bash
-docker compose ps
-curl http://localhost:6333/readyz
-curl http://localhost:6333/collections
-docker exec codesentinel-redis redis-cli -a <REDIS_PASSWORD> ping
-docker exec codesentinel-mongo mongosh -u codesentinel -p <MONGO_ROOT_PASSWORD> --authenticationDatabase admin --eval "db.adminCommand({ ping: 1 })"
-```
-
-After first repo index:
-
-```bash
-curl http://localhost:6333/collections/code_chunks
-# expect points_count > 0
-
-docker exec codesentinel-redis redis-cli -a <REDIS_PASSWORD> keys "review:result:*"
-# after a review, expect keys; re-run same PR review and check API logs for "redis cache HIT"
-```
-
-## 3. Run apps
-
-```bash
+npm run infra:up      # Mongo + Redis + Qdrant
+npm run infra:verify  # optional sanity check
 npm run dev
 ```
 
-- Web: http://localhost:5173  
-- API health: http://localhost:4000/api/health  
-- Worker: processes `embedding` and `ai-review` queues  
+| Service | URL |
+|---------|-----|
+| Web | http://localhost:5173 |
+| API health | http://localhost:4000/api/health |
+| Metrics | http://localhost:4000/api/metrics |
 
-## 4. Happy path
+**Tip:** set `EMBEDDING_PROVIDER=gemini` and `INDEX_MAX_CHUNKS=80` if you’re on free-tier embedding quotas.
 
-1. Open the web app → **Continue with GitHub**
-2. Import a repo → wait until index status is `ready` (Qdrant points increase)
-3. Import a PR by number → **Run AI Review**
-4. Watch Socket.io status events; findings + debt score appear
-5. Use semantic search on the repo page (natural language → Qdrant)
+---
 
-## Tests
+## Demo flow
 
-```bash
-npm test
+1. Open the app → **Continue with GitHub**  
+2. Import a repo you own (or a fork with at least one PR)  
+3. Wait until index status is **ready**  
+4. Enter a real PR number → **Import and open**  
+5. **Run AI Review** — watch status events, then findings + debt score  
+6. Try semantic search on the repo page  
+
+Re-run the same review on an unchanged diff and check API logs for `redis cache HIT`.
+
+---
+
+## Project layout
+
+```
+apps/
+  api/       Express API, auth, RAG, review orchestration
+  worker/    BullMQ processors (index + AI review)
+  web/       React UI (dashboard, PR view, search)
+packages/
+  shared/    Zod schemas, queue names, socket events
+docker/      Production Dockerfiles + nginx
+scripts/     Infra verify, smoke test
 ```
 
-Jest covers AST chunking, RAG/review helpers, GitHub error mapping, and Prometheus metrics.
-
-## Production
-
-```bash
-npm run docker:prod    # full stack on :8080 (web) and :4000 (api)
-npm run smoke          # health + metrics smoke test
-```
-
-See [DEPLOY.md](./DEPLOY.md) for Railway/Render split deploy, Prometheus metrics, and CI.
-
-## Observability
-
-| Endpoint | Purpose |
-|---|---|
-| `/api/health` | Mongo + Redis + Qdrant dependency checks |
-| `/api/ready` | Readiness probe |
-| `/api/metrics` | Prometheus metrics (latency, cache hits, reviews) |
-| `/api/stats` | Authenticated dashboard stats + audit trail |
-
-## Docs
-
-See [SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md) for Qdrant vs Mongo vectors, Socket.io scaling, chunking tradeoffs, and queue design.
+---
 
 ## Scripts
 
-| Script | Purpose |
-|---|---|
-| `npm run infra:up` | Start Mongo + Redis + Qdrant |
-| `npm run infra:verify` | Host-side client checks |
-| `npm run dev` | API + web + worker |
-| `npm test` | Unit tests |
-| `npm run smoke` | Health/metrics smoke test |
-| `npm run docker:prod` | Production Docker stack |
+| Command | What it does |
+|---------|----------------|
+| `npm run infra:up` | Start Mongo, Redis, Qdrant |
+| `npm run infra:verify` | Ping infra from the host |
+| `npm run dev` | API + web + worker together |
+| `npm test` | Jest (chunking, metrics, GitHub errors, RAG helpers) |
+| `npm run smoke` | Hit `/health`, `/ready`, `/metrics` |
+| `npm run docker:prod` | Full production Compose stack |
+
+---
+
+## Observability
+
+- `GET /api/health` — Mongo / Redis / Qdrant checks  
+- `GET /api/ready` — readiness probe  
+- `GET /api/metrics` — Prometheus text (request latency, review cache hits)  
+- `GET /api/stats` — authenticated platform stats + recent audit events  
+
+CI runs typecheck, lint, tests, and Docker image builds on every push ([`.github/workflows/ci.yml`](./.github/workflows/ci.yml)).
+
+Production notes: [DEPLOY.md](./DEPLOY.md)
+
+---
+
+## Design notes (short)
+
+- **Vectors live in Qdrant**, not Mongo — keeps ANN search separate from PR/auth state  
+- **Workers never own Socket.io** — they publish on Redis; the API bridges into rooms  
+- **Review cache key** = `sha256(headSha + patch)` so identical diffs skip Claude  
+- **Chunking** prefers AST/symbol boundaries for JS/TS; definition-span heuristics for other languages  
+
+Full write-up: [SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md)
+
+---
+
+## License
+
+MIT — use it, fork it, break it, improve it.
