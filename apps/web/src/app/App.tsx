@@ -40,10 +40,10 @@ function ProtectedRoute() {
 
   if (status === 'idle' || status === 'loading' || (status === 'authenticated' && !accessToken)) {
     return (
-      <div className="grid min-h-screen place-items-center">
+      <div className="grid min-h-screen place-items-center bg-ink-950">
         <div className="text-center">
-          <div className="mx-auto h-5 w-5 animate-spin rounded-full border-2 border-mark border-t-transparent" />
-          <p className="mt-3 text-xs text-ink-faint">Restoring workspace…</p>
+          <div className="mx-auto h-5 w-5 animate-spin rounded-full border-2 border-signal-green border-t-transparent" />
+          <p className="mt-3 text-xs text-slate-500">Restoring workspace…</p>
         </div>
       </div>
     );
