@@ -8,7 +8,7 @@ export const qdrant = new QdrantClient({
   ...(env.QDRANT_API_KEY ? { apiKey: env.QDRANT_API_KEY } : {}),
 });
 
-function qdrantHeaders(): HeadersInit {
+function qdrantHeaders(): Record<string, string> {
   return env.QDRANT_API_KEY ? { 'api-key': env.QDRANT_API_KEY } : {};
 }
 
