@@ -27,8 +27,9 @@ async function start(): Promise<void> {
   await initSocketServer(server);
   await startRealtimeBridge();
 
-  server.listen(env.PORT ?? env.API_PORT, () => {
-    logger.info('api listening', { port: env.PORT ?? env.API_PORT, env: env.NODE_ENV });
+  const port = env.PORT ?? env.API_PORT;
+  server.listen(port, '0.0.0.0', () => {
+    logger.info('api listening', { port, host: '0.0.0.0', env: env.NODE_ENV });
   });
 }
 

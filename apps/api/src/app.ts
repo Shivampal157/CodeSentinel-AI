@@ -37,11 +37,10 @@ export function createApp() {
   app.use(cookieParser());
   app.use(requestId);
   app.use(requestLogger);
+  app.use('/api', healthRouter);
   app.use((req, res, next) => {
     void rateLimit(req, res, next);
   });
-
-  app.use('/api', healthRouter);
   app.use('/api', metricsRouter);
   app.use('/api/stats', statsRouter);
   app.use('/api/auth', authRouter);
