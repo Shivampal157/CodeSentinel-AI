@@ -116,29 +116,33 @@ export function PullRequestPage() {
     }
   };
 
-  if (loading) return <div className="p-8 text-xs text-slate-500">Loading review workspace…</div>;
+  if (loading) return <div className="p-8 text-xs text-ink-faint">Loading review workspace…</div>;
 
   return (
     <div className="p-4 lg:p-5">
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <Link to={pullRequest?.repositoryId ? `/app/repos/${pullRequest.repositoryId}` : '/app'} className="p-1 text-slate-500 hover:text-white">
+        <Link
+          to={pullRequest?.repositoryId ? `/app/repos/${pullRequest.repositoryId}` : '/app'}
+          className="p-1 text-ink-faint hover:text-ink"
+        >
           <ArrowLeft className="h-4 w-4" />
         </Link>
-        <span className="font-mono text-xs text-slate-600">#{pullRequest?.number}</span>
-        <h1 className="min-w-0 truncate text-sm font-semibold text-slate-100">{pullRequest?.title}</h1>
+        <span className="font-mono text-xs text-ink-faint">#{pullRequest?.number}</span>
+        <h1 className="min-w-0 truncate text-sm font-semibold text-ink">{pullRequest?.title}</h1>
         <span
           className={clsx(
             'ml-auto flex items-center gap-1.5 text-[10px] uppercase tracking-wider',
-            socketConnected ? 'text-signal-green' : 'text-slate-600',
+            socketConnected ? 'text-mark' : 'text-ink-faint',
           )}
         >
           {socketConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
           {socketConnected ? 'Live' : 'Offline'}
         </span>
         <button
+          type="button"
           onClick={() => void runReview()}
           disabled={runningReview || pullRequest?.reviewStatus === 'queued' || pullRequest?.reviewStatus === 'running'}
-          className="inline-flex h-9 items-center gap-2 bg-signal-green px-4 text-xs font-semibold text-ink-950 hover:bg-emerald-300 disabled:opacity-40"
+          className="btn-primary h-9 text-xs disabled:opacity-40"
         >
           {runningReview || pullRequest?.reviewStatus === 'queued' || pullRequest?.reviewStatus === 'running' ? (
             <RefreshCw className="h-3.5 w-3.5 animate-spin" />
@@ -148,26 +152,36 @@ export function PullRequestPage() {
           {pullRequest?.reviewStatus === 'running' ? 'Review running' : 'Run AI Review'}
         </button>
       </div>
-      {error && <div className="mb-3 border border-signal-red/20 bg-signal-red/5 p-2 text-xs text-signal-red">{error}</div>}
+      {error && <div className="mb-3 border border-signal-red/20 bg-red-50 p-2 text-xs text-signal-red">{error}</div>}
       <div className="grid min-w-0 gap-4 2xl:grid-cols-[minmax(0,1fr)_380px]">
         <DiffViewer files={diff?.files ?? []} loading={loading} />
-        <aside className="h-[calc(100vh-176px)] min-h-[560px] overflow-hidden border border-white/10 bg-ink-950">
-          <div className="grid h-10 grid-cols-2 border-b border-white/10 bg-ink-900">
+        <aside className="surface h-[calc(100vh-176px)] min-h-[560px] overflow-hidden">
+          <div className="grid h-10 grid-cols-2 border-b border-paper-line bg-paper-soft">
             <button
+              type="button"
               onClick={() => setActivePanel('findings')}
-              className={clsx('flex items-center justify-center gap-2 text-xs font-medium', activePanel === 'findings' ? 'border-b-2 border-signal-green text-white' : 'text-slate-500')}
+              className={clsx(
+                'flex items-center justify-center gap-2 text-xs font-medium',
+                activePanel === 'findings' ? 'border-b-2 border-mark text-ink' : 'text-ink-faint',
+              )}
             >
               <Bot className="h-3.5 w-3.5" />
               Findings
-              {review?.findings.length ? <span className="font-mono text-[10px] text-slate-600">{review.findings.length}</span> : null}
+              {review?.findings.length ? (
+                <span className="font-mono text-[10px] text-ink-faint">{review.findings.length}</span>
+              ) : null}
             </button>
             <button
+              type="button"
               onClick={() => setActivePanel('comments')}
-              className={clsx('flex items-center justify-center gap-2 text-xs font-medium', activePanel === 'comments' ? 'border-b-2 border-signal-green text-white' : 'text-slate-500')}
+              className={clsx(
+                'flex items-center justify-center gap-2 text-xs font-medium',
+                activePanel === 'comments' ? 'border-b-2 border-mark text-ink' : 'text-ink-faint',
+              )}
             >
               <MessageSquare className="h-3.5 w-3.5" />
               Comments
-              <span className="font-mono text-[10px] text-slate-600">{comments.filter((comment) => !comment.resolved).length}</span>
+              <span className="font-mono text-[10px] text-ink-faint">{comments.filter((comment) => !comment.resolved).length}</span>
             </button>
           </div>
           <div className="h-[calc(100%-40px)] overflow-y-auto p-3">
