@@ -1,0 +1,10 @@
+{
+  "requests": [
+    {
+      "model": "models/gemini-embedding-001",
+      "content": { "parts": [{ "text": "auth login" }] },
+      "taskType": "RETRIEVAL_DOCUMENT",
+      "outputDimensionality": 768
+    }
+  ]
+}

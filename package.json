@@ -1,0 +1,48 @@
+{
+  "name": "codesentinel-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Real-time collaborative code review with RAG-backed AI analysis",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently -n api,web,worker -c blue,green,magenta \"npm run dev -w @codesentinel/api\" \"npm run dev -w @codesentinel/web\" \"npm run dev -w @codesentinel/worker\"",
+    "dev:api": "npm run dev -w @codesentinel/api",
+    "dev:web": "npm run dev -w @codesentinel/web",
+    "dev:worker": "npm run dev -w @codesentinel/worker",
+    "build": "npm run build -w @codesentinel/shared && npm run build -w @codesentinel/api && npm run build -w @codesentinel/worker && npm run build -w @codesentinel/web",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "infra:logs": "docker compose logs -f --tail=100",
+    "infra:ps": "docker compose ps",
+    "infra:verify": "tsx scripts/verify-infra.ts",
+    "qdrant:verify": "tsx scripts/verify-qdrant.ts",
+    "smoke": "tsx scripts/smoke-e2e.ts",
+    "test": "npm run test -w @codesentinel/api",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "docker:prod": "docker compose -f docker-compose.prod.yml up --build -d",
+    "docker:prod:down": "docker compose -f docker-compose.prod.yml down"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "mongodb": "^6.12.0",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "ioredis": "^5.4.2"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "model": "models/gemini-embedding-001",
+  "content": {
+    "parts": [{ "text": "hello world authentication service" }]
+  },
+  "taskType": "RETRIEVAL_DOCUMENT"
+}

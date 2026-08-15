@@ -1,0 +1,34 @@
+# syntax=docker/dockerfile:1
+
+FROM node:20-alpine AS base
+WORKDIR /app
+
+FROM base AS deps
+COPY package.json package-lock.json ./
+COPY apps/worker/package.json apps/worker/
+COPY apps/api/package.json apps/api/
+COPY packages/shared/package.json packages/shared/
+RUN npm ci --workspace=@codesentinel/worker --workspace=@codesentinel/shared --omit=dev
+RUN npm install tsx --no-save
+
+FROM base AS build-shared
+COPY package.json package-lock.json ./
+COPY packages/shared/package.json packages/shared/
+RUN npm ci --workspace=@codesentinel/shared
+COPY tsconfig.base.json ./
+COPY packages/shared ./packages/shared
+RUN npm run build -w @codesentinel/shared
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=build-shared /app/packages/shared/dist ./packages/shared/dist
+COPY --from=build-shared /app/packages/shared/package.json ./packages/shared/package.json
+COPY package.json package-lock.json ./
+COPY tsconfig.base.json ./
+COPY apps/worker ./apps/worker
+COPY apps/api/src ./apps/api/src
+COPY packages/shared ./packages/shared
+EXPOSE 0
+CMD ["npx", "tsx", "apps/worker/src/index.ts"]
