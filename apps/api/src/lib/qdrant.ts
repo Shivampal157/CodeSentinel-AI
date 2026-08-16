@@ -21,6 +21,7 @@ export async function pingQdrant(): Promise<number> {
   const started = Date.now();
   const response = await fetch(`${env.QDRANT_URL.replace(/\/$/, '')}/readyz`, {
     headers: qdrantHeaders(),
+    signal: AbortSignal.timeout(8000),
   });
   const body = (await response.text()).trim();
   if (!response.ok) {
@@ -32,6 +33,7 @@ export async function pingQdrant(): Promise<number> {
 export async function qdrantVersion(): Promise<string | undefined> {
   const response = await fetch(`${env.QDRANT_URL.replace(/\/$/, '')}/`, {
     headers: qdrantHeaders(),
+    signal: AbortSignal.timeout(8000),
   });
   if (!response.ok) return undefined;
   const payload = (await response.json()) as { version?: string };

@@ -37,6 +37,10 @@ export function createApp() {
   app.use(cookieParser());
   app.use(requestId);
   app.use(requestLogger);
+  // Railway default healthcheck hits `/` unless path is overridden.
+  app.get('/', (_req, res) => {
+    res.status(200).json({ ok: true, service: 'codesentinel-api' });
+  });
   app.use('/api', healthRouter);
   app.use((req, res, next) => {
     void rateLimit(req, res, next);

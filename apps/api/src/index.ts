@@ -13,7 +13,23 @@ const app = createApp();
 const server = createServer(app);
 let shuttingDown = false;
 
+function listen(): Promise<void> {
+  const port = env.PORT ?? env.API_PORT;
+  return new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(port, '0.0.0.0', () => {
+      server.off('error', reject);
+      logger.info('api listening', { port, host: '0.0.0.0', env: env.NODE_ENV });
+      resolve();
+    });
+  });
+}
+
 async function start(): Promise<void> {
+  // Bind port first so Railway healthchecks succeed while deps connect.
+  await listen();
+
+  logger.info('connecting dependencies');
   await connectMongo();
   await connectRedis();
   await connectQdrant();
@@ -26,11 +42,7 @@ async function start(): Promise<void> {
   }
   await initSocketServer(server);
   await startRealtimeBridge();
-
-  const port = env.PORT ?? env.API_PORT;
-  server.listen(port, '0.0.0.0', () => {
-    logger.info('api listening', { port, host: '0.0.0.0', env: env.NODE_ENV });
-  });
+  logger.info('api ready');
 }
 
 async function shutdown(signal: string): Promise<void> {
@@ -52,6 +64,9 @@ process.on('SIGTERM', () => {
 });
 
 start().catch((err) => {
-  logger.error('failed to start api', { err });
+  logger.error('failed to start api', {
+    message: err instanceof Error ? err.message : String(err),
+    stack: err instanceof Error ? err.stack : undefined,
+  });
   process.exit(1);
 });
