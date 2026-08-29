@@ -1,3 +1,4 @@
+import { createServer } from 'node:http';
 import { Worker } from 'bullmq';
 import { QUEUES } from '@codesentinel/shared';
 import { connectRedis as connectApiRedis } from '../../api/src/lib/redis.js';
@@ -19,7 +20,20 @@ function connectionFromUrl(url: string) {
   };
 }
 
+/** Render web services must bind PORT; health only, no public routes needed. */
+function listenForPlatform(): void {
+  const port = process.env.PORT;
+  if (!port) return;
+  createServer((_req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'ok', service: 'codesentinel-worker' }));
+  }).listen(Number(port), '0.0.0.0', () => {
+    logger.info('worker health listening', { port });
+  });
+}
+
 async function start(): Promise<void> {
+  listenForPlatform();
   await connectMongo();
   await connectRedis();
   await connectApiRedis();

@@ -60,11 +60,79 @@ Or expose API on subdomain: `https://api.yourdomain.com/api/auth/github/callback
 
 ---
 
-## Option B — Split deploy (Railway / Render / Fly)
+## Option B — Render (recommended for free tier)
+
+Deploy API, worker, and web on [Render](https://render.com) using MongoDB Atlas, Upstash Redis, and Qdrant Cloud.
+
+### Quick deploy (Blueprint)
+
+1. Push `render.yaml` to GitHub (`main`).
+2. [Render Dashboard](https://dashboard.render.com) → **New** → **Blueprint**.
+3. Connect repo `Shivampal157/CodeSentinel-AI`.
+4. Paste secrets when prompted (see env table below).
+5. After API is live, set `VITE_API_URL`, `CLIENT_ORIGIN`, and `GITHUB_CALLBACK_URL`, then **Redeploy** web + API.
+
+### Manual deploy (3 services)
+
+| Service | Type | Build | Start / Publish |
+|---|---|---|---|
+| `codesentinel-api` | Web Service (Node 20) | `npm ci && npm run build:api` | `npm run start:api` |
+| `codesentinel-worker` | Web Service (Node 20) | `npm ci && npm run build:worker` | `npm run start:worker` |
+| `codesentinel-web` | Static Site | `npm ci && npm run build:web` | Publish `apps/web/dist` |
+
+**API settings:** Health check path `/api/health` · Region Oregon (free) · Do **not** set `PORT` manually.
+
+**Web settings:** Add rewrite `/*` → `/index.html` (SPA). Set `VITE_API_URL` **before** build.
+
+**Worker:** Runs as a free web service; binds `PORT` with a minimal health endpoint (Render requirement).
+
+### Env vars (API + worker)
+
+| Variable | Example / notes |
+|---|---|
+| `NODE_ENV` | `production` |
+| `TRUST_PROXY` | `true` (API only) |
+| `MONGODB_URI` | `mongodb+srv://...@cluster.../codesentinel?...` |
+| `REDIS_URL` | `rediss://...` (Upstash) |
+| `QDRANT_URL` / `QDRANT_API_KEY` | Qdrant Cloud |
+| `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` | 48+ char random hex |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth app |
+| `GEMINI_API_KEY` / `ANTHROPIC_API_KEY` | AI keys |
+| `EMBEDDING_PROVIDER` | `gemini` |
+
+**API only (after URLs known):**
+
+| Variable | Value |
+|---|---|
+| `CLIENT_ORIGIN` | `https://codesentinel-web.onrender.com` |
+| `GITHUB_CALLBACK_URL` | `https://codesentinel-api.onrender.com/api/auth/github/callback` |
+
+**Web only:**
+
+| Variable | Value |
+|---|---|
+| `VITE_API_URL` | `https://codesentinel-api.onrender.com` (no trailing slash) |
+
+### Deploy order
+
+1. Deploy **API** → wait for Live → open `https://<api>/api/health`
+2. Deploy **worker** with same DB/Redis/Qdrant keys
+3. Set API `CLIENT_ORIGIN` + `GITHUB_CALLBACK_URL` → redeploy API
+4. Set web `VITE_API_URL` → deploy **web**
+5. Update GitHub OAuth app callback URL to match API
+
+### GitHub OAuth (production)
+
+- Homepage: your Render web URL
+- Callback: `https://<api-host>/api/auth/github/callback`
+
+---
+
+## Option C — Split deploy (Railway / Fly + Vercel)
 
 | Component | Suggested host |
 |---|---|
-| API + Worker | Railway or Render (Node 20) |
+| API + Worker | Railway or Fly (Node 20) |
 | Web | Vercel or Cloudflare Pages |
 | MongoDB | MongoDB Atlas |
 | Redis | Upstash or Redis Cloud |
