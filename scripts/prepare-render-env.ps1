@@ -34,6 +34,10 @@ Write-Host 'NODE_ENV=production'
 Write-Host 'EMBEDDING_PROVIDER=gemini'
 Write-Host 'QDRANT_COLLECTION=code_chunks'
 
+Write-Host "`n=== Worker only (also needs JWT — imports API modules) ===`n" -ForegroundColor Cyan
+Write-Host "JWT_ACCESS_SECRET=$($vars['JWT_ACCESS_SECRET'])"
+Write-Host "JWT_REFRESH_SECRET=$($vars['JWT_REFRESH_SECRET'])"
+
 Write-Host "`n=== Web only (after API URL confirmed) ===`n" -ForegroundColor Cyan
 Write-Host 'VITE_API_URL=https://codesentinel-api.onrender.com'
 

@@ -1,15 +1,23 @@
-import { Redis } from 'ioredis';
+import { Redis, type RedisOptions } from 'ioredis';
 import { SOCKET_EVENTS } from '@codesentinel/shared';
 import { env } from '../config/env.js';
 import { logger } from './logger.js';
 
 const CHANNEL = 'codesentinel:realtime';
 
-export const redis = new Redis(env.REDIS_URL, {
-  maxRetriesPerRequest: null,
-  enableReadyCheck: true,
-  lazyConnect: true,
-});
+function redisClientOptions(url: string): RedisOptions {
+  const options: RedisOptions = {
+    maxRetriesPerRequest: null,
+    enableReadyCheck: true,
+    lazyConnect: true,
+  };
+  if (url.startsWith('rediss://')) {
+    options.tls = {};
+  }
+  return options;
+}
+
+export const redis = new Redis(env.REDIS_URL, redisClientOptions(env.REDIS_URL));
 
 redis.on('error', (err: Error) => {
   logger.error('redis error', { message: err.message });

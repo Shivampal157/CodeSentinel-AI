@@ -25,14 +25,27 @@ function listen(): Promise<void> {
   });
 }
 
+async function connectDependency(
+  name: string,
+  fn: () => Promise<void>,
+): Promise<void> {
+  try {
+    await fn();
+  } catch (err) {
+    logger.warn(`${name} connect deferred`, {
+      message: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
 async function start(): Promise<void> {
-  // Bind port first so Railway healthchecks succeed while deps connect.
+  // Bind port first so platform healthchecks succeed while deps connect.
   await listen();
 
   logger.info('connecting dependencies');
-  await connectMongo();
-  await connectRedis();
-  await connectQdrant();
+  await connectDependency('mongo', connectMongo);
+  await connectDependency('redis', connectRedis);
+  await connectDependency('qdrant', connectQdrant);
   try {
     await ensureCollection();
   } catch (err) {
@@ -40,8 +53,14 @@ async function start(): Promise<void> {
       message: err instanceof Error ? err.message : String(err),
     });
   }
-  await initSocketServer(server);
-  await startRealtimeBridge();
+  try {
+    await initSocketServer(server);
+    await startRealtimeBridge();
+  } catch (err) {
+    logger.warn('realtime bridge deferred', {
+      message: err instanceof Error ? err.message : String(err),
+    });
+  }
   logger.info('api ready');
 }
 

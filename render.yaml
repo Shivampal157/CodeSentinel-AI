@@ -10,7 +10,7 @@ services:
     plan: free
     buildCommand: npm ci && npm run build:api
     startCommand: npm run start:api
-    healthCheckPath: /api/health
+    healthCheckPath: /
     envVars:
       - key: NODE_ENV
         value: production
@@ -54,6 +54,7 @@ services:
     plan: free
     buildCommand: npm ci && npm run build:worker
     startCommand: npm run start:worker
+    healthCheckPath: /
     envVars:
       - key: NODE_ENV
         value: production
@@ -70,6 +71,10 @@ services:
       - key: QDRANT_URL
         sync: false
       - key: QDRANT_API_KEY
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
         sync: false
       - key: GEMINI_API_KEY
         sync: false

@@ -17,6 +17,7 @@ function connectionFromUrl(url: string) {
     port: Number(parsed.port || 6379),
     password: parsed.password ? decodeURIComponent(parsed.password) : undefined,
     maxRetriesPerRequest: null as null,
+    ...(parsed.protocol === 'rediss:' ? { tls: {} } : {}),
   };
 }
 
@@ -34,10 +35,17 @@ function listenForPlatform(): void {
 
 async function start(): Promise<void> {
   listenForPlatform();
-  await connectMongo();
-  await connectRedis();
-  await connectApiRedis();
-  await ensureCollection();
+  try {
+    await connectMongo();
+    await connectRedis();
+    await connectApiRedis();
+    await ensureCollection();
+  } catch (err) {
+    logger.error('worker dependency connect failed', {
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return;
+  }
 
   const connection = connectionFromUrl(env.REDIS_URL);
 

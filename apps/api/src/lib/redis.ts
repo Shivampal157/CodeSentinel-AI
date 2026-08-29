@@ -1,12 +1,20 @@
-import { Redis } from 'ioredis';
+import { Redis, type RedisOptions } from 'ioredis';
 import { env } from '../config/env.js';
 import { logger } from './logger.js';
 
-export const redis = new Redis(env.REDIS_URL, {
-  maxRetriesPerRequest: 3,
-  enableReadyCheck: true,
-  lazyConnect: true,
-});
+function redisClientOptions(url: string): RedisOptions {
+  const options: RedisOptions = {
+    maxRetriesPerRequest: 3,
+    enableReadyCheck: true,
+    lazyConnect: true,
+  };
+  if (url.startsWith('rediss://')) {
+    options.tls = {};
+  }
+  return options;
+}
+
+export const redis = new Redis(env.REDIS_URL, redisClientOptions(env.REDIS_URL));
 
 redis.on('error', (err: Error) => {
   logger.error('redis error', { message: err.message });
