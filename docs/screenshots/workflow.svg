@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 280" fill="none">
+  <rect width="1200" height="280" fill="#0a0a0f"/>
+  <text x="600" y="36" fill="#f8fafc" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" text-anchor="middle">End-to-End Demo Flow</text>
+  <g>
+    <rect x="40" y="70" width="150" height="150" rx="10" fill="#111827" stroke="#34d399" stroke-width="2"/>
+    <text x="115" y="110" fill="#34d399" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700" text-anchor="middle">01</text>
+    <text x="115" y="140" fill="#f8fafc" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" text-anchor="middle">GitHub</text>
+    <text x="115" y="165" fill="#94a3b8" font-family="Segoe UI, Arial, sans-serif" font-size="11" text-anchor="middle">OAuth login</text>
+  </g>
+  <g>
+    <rect x="230" y="70" width="150" height="150" rx="10" fill="#111827" stroke="#34d399" stroke-width="2"/>
+    <text x="305" y="110" fill="#34d399" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700" text-anchor="middle">02</text>
+    <text x="305" y="140" fill="#f8fafc" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" text-anchor="middle">Import</text>
+    <text x="305" y="165" fill="#94a3b8" font-family="Segoe UI, Arial, sans-serif" font-size="11" text-anchor="middle">Index repo</text>
+  </g>
+  <g>
+    <rect x="420" y="70" width="150" height="150" rx="10" fill="#111827" stroke="#34d399" stroke-width="2"/>
+    <text x="495" y="110" fill="#34d399" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700" text-anchor="middle">03</text>
+    <text x="495" y="140" fill="#f8fafc" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" text-anchor="middle">Open PR</text>
+    <text x="495" y="165" fill="#94a3b8" font-family="Segoe UI, Arial, sans-serif" font-size="11" text-anchor="middle">Monaco diff</text>
+  </g>
+  <g>
+    <rect x="610" y="70" width="150" height="150" rx="10" fill="#111827" stroke="#34d399" stroke-width="2"/>
+    <text x="685" y="110" fill="#34d399" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700" text-anchor="middle">04</text>
+    <text x="685" y="140" fill="#f8fafc" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" text-anchor="middle">AI Review</text>
+    <text x="685" y="165" fill="#94a3b8" font-family="Segoe UI, Arial, sans-serif" font-size="11" text-anchor="middle">RAG + Claude</text>
+  </g>
+  <g>
+    <rect x="800" y="70" width="150" height="150" rx="10" fill="#111827" stroke="#34d399" stroke-width="2"/>
+    <text x="875" y="110" fill="#34d399" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700" text-anchor="middle">05</text>
+    <text x="875" y="140" fill="#f8fafc" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" text-anchor="middle">Findings</text>
+    <text x="875" y="165" fill="#94a3b8" font-family="Segoe UI, Arial, sans-serif" font-size="11" text-anchor="middle">Debt + comments</text>
+  </g>
+  <g>
+    <rect x="990" y="70" width="150" height="150" rx="10" fill="#111827" stroke="#34d399" stroke-width="2"/>
+    <text x="1065" y="110" fill="#34d399" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700" text-anchor="middle">06</text>
+    <text x="1065" y="140" fill="#f8fafc" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" text-anchor="middle">Search</text>
+    <text x="1065" y="165" fill="#94a3b8" font-family="Segoe UI, Arial, sans-serif" font-size="11" text-anchor="middle">Semantic code</text>
+  </g>
+  <path d="M190 145 H230" stroke="#64748b" stroke-width="2"/>
+  <path d="M380 145 H420" stroke="#64748b" stroke-width="2"/>
+  <path d="M570 145 H610" stroke="#64748b" stroke-width="2"/>
+  <path d="M760 145 H800" stroke="#64748b" stroke-width="2"/>
+  <path d="M950 145 H990" stroke="#64748b" stroke-width="2"/>
+</svg>
